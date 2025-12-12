@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F9FAFB;
+  --foreground: #374151;
+  --navy: #1E3A8A;
+  --navy-dark: #1E40AF;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+}
+
+.bg-background {
+  background-color: var(--background);
+}
+
+.bg-navy {
+  background-color: var(--navy);
+}
+
+.text-navy {
+  color: var(--navy);
+}
+
+.font-serif {
+  font-family: Georgia, serif;
+}
