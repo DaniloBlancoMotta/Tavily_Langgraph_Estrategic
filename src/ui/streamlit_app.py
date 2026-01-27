@@ -46,13 +46,17 @@ if prompt := st.chat_input("Ask your strategic question..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
+
     # Prepare AI Response Container
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         status_placeholder = st.status("Thinking...", expanded=True)
         
-        full_response = ""
-        current_logs = []
+        # Use dict to avoid nonlocal scope issues
+        response_data = {
+            "full_response": "",
+            "current_logs": []
+        }
         
         # Prepare Config
         config = {"configurable": {"thread_id": st.session_state.thread_id}}
@@ -68,7 +72,6 @@ if prompt := st.chat_input("Ask your strategic question..."):
 
         # Run Graph Async Wrapper
         async def run_agent():
-            nonlocal full_response
             try:
                 async for event in graph.astream(initial_state, config, stream_mode="updates"):
                     for node_name, node_data in event.items():
@@ -79,7 +82,7 @@ if prompt := st.chat_input("Ask your strategic question..."):
                                 log_msg = log.message if hasattr(log, 'message') else str(log)
                                 log_type = log.type if hasattr(log, 'type') else "info"
                                 status_placeholder.write(f"**{node_name}**: {log_msg}")
-                                current_logs.append({"type": log_type, "message": log_msg})
+                                response_data["current_logs"].append({"type": log_type, "message": log_msg})
 
                         # Process Resources (Search Results)
                         if "resources" in node_data and node_data["resources"]:
@@ -90,12 +93,12 @@ if prompt := st.chat_input("Ask your strategic question..."):
                         if "messages" in node_data:
                             last_msg = node_data["messages"][-1]
                             if isinstance(last_msg, AIMessage) and last_msg.content:
-                                full_response = last_msg.content
-                                message_placeholder.markdown(full_response)
+                                response_data["full_response"] = last_msg.content
+                                message_placeholder.markdown(response_data["full_response"])
                                 
             except Exception as e:
                 status_placeholder.error(f"Error: {str(e)}")
-                full_response = f"Error: {str(e)}"
+                response_data["full_response"] = f"Error: {str(e)}"
 
         # Run the async loop
         asyncio.run(run_agent())
@@ -105,6 +108,7 @@ if prompt := st.chat_input("Ask your strategic question..."):
         # Save to history
         st.session_state.messages.append({
             "role": "assistant", 
-            "content": full_response,
-            "logs": current_logs
+            "content": response_data["full_response"],
+            "logs": response_data["current_logs"]
         })
+
