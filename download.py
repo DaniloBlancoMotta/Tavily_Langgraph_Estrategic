@@ -12,7 +12,7 @@ def html_to_text(html: str) -> str:
     
     text = soup.get_text(separator="\n", strip=True)
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    return "\n".join(lines[:150])  # Aumentado limite levemente
+    return "\n".join(lines[:150])  
 
 async def process_resource(client, resource, logs):
     """Downloads and processes a single resource."""
@@ -36,16 +36,24 @@ async def download_node(state: dict) -> dict:
     resources = state.get("resources", [])
     logs = state.get("logs", [])
     
-    if not resources:
-        return {"logs": logs}
-    
-    logs.append(LogEntry(message=f"Starting parallel downloads for {len(resources)} sources...", type="download"))
-    
-    async with httpx.AsyncClient(timeout=10.0, headers={"User-Agent": "StratGovBot/1.0"}) as client:
-        tasks = [process_resource(client, res, logs) for res in resources]
-        results = await asyncio.gather(*tasks)
-    
-    success_count = sum(1 for r in results if r)
-    logs.append(LogEntry(message=f"Downloads completed: {success_count}/{len(resources)}", type="download"))
-    
-    return {"resources": resources, "logs": logs}
+    try:
+        if not resources:
+            return {"logs": logs}
+        
+        logs.append(LogEntry(message=f"Starting parallel downloads for {len(resources)} sources...", type="download"))
+        
+        async with httpx.AsyncClient(timeout=10.0, headers={"User-Agent": "StratGovBot/1.0"}) as client:
+            tasks = [process_resource(client, res, logs) for res in resources]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Calculate success considering exceptions in results (since return_exceptions=True)
+        success_count = sum(1 for r in results if r is True)
+        logs.append(LogEntry(message=f"Downloads completed: {success_count}/{len(resources)}", type="download"))
+        
+        return {"resources": resources, "logs": logs}
+        
+    except Exception as e:
+        error_msg = f"Critical Error in Download Node: {str(e)}"
+        print(error_msg) # Fallback if logger not available, but we should probably use logger
+        logs.append(LogEntry(message=error_msg, type="error"))
+        return {"resources": resources, "logs": logs}

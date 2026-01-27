@@ -1,4 +1,7 @@
+import logging
 from langchain_core.messages import SystemMessage, AIMessage
+
+logger = logging.getLogger("StratGov_Agent")
 from state import AgentState, LogEntry
 from model import get_model
 from search import strategic_search
@@ -43,19 +46,74 @@ def chat_node(state: AgentState) -> dict:
         context = "\n".join([f"- {r.title}: {r.description}" for r in resources])
         messages.append(SystemMessage(content=f"Recursos disponíveis (Use estas informações):\n{context}"))
     
-    # Instancia modelo com configs
-    llm = get_model(
-        model_name=model_name,
-        temperature=temperature,
-        max_tokens=max_tokens
-    )
-    llm_with_tools = llm.bind_tools(tools)
-    
-    logs.append(LogEntry(message=f"Generating response ({model_name}, T={temperature})", type="info"))
-    
-    response = llm_with_tools.invoke(messages)
-    
-    return {"messages": [response], "logs": logs}
+    try:
+        # Instancia modelo com configs
+        llm = get_model(
+            model_name=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        llm_with_tools = llm.bind_tools(tools)
+        
+        logs.append(LogEntry(message=f"Generating response ({model_name}, T={temperature})", type="info"))
+        
+        response = llm_with_tools.invoke(messages)
+        
+        return {"messages": [response], "logs": logs}
+        
+    except Exception as e:
+        error_msg = f"Primary model ({model_name}) failed: {str(e)}"
+        logger.error(error_msg)
+        logs.append(LogEntry(message=error_msg, type="warning"))
+        
+        # Fallback Logic
+        fallback_map = {
+            "groq": "mixtral",       # Llama -> Mixtral
+            "llama": "mixtral",      # Llama -> Mixtral
+            "mixtral": "groq",       # Mixtral -> Llama
+            "kimi": "groq"           # Kimi -> Llama
+        }
+        
+        # Determine fallback model name (internal key, not full ID)
+        current_key = "groq" # Default assumption
+        if "mixtral" in model_name or "mixtral" == model_name: current_key = "mixtral"
+        elif "kimi" in model_name: current_key = "kimi"
+        elif "llama" in model_name: current_key = "llama"
+        
+        fallback_key = fallback_map.get(current_key, "groq")
+        
+        # Prevent infinite loop if fallback is same as current (generic safety)
+        if fallback_key == current_key:
+             fallback_key = "mixtral" if current_key == "groq" else "groq"
+
+        logs.append(LogEntry(message=f"🔄 Switching to fallback model: {fallback_key.upper()}...", type="info"))
+        
+        try:
+            fallback_llm = get_model(
+                model_name=fallback_key,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            fallback_llm_with_tools = fallback_llm.bind_tools(tools)
+            
+            response = fallback_llm_with_tools.invoke(messages)
+            
+            # Add note about fallback usage
+            if isinstance(response.content, str):
+                response.content += f"\n\n*(Generated via fallback model: {fallback_key})*"
+            
+            return {"messages": [response], "logs": logs}
+            
+        except Exception as e2:
+            critical_msg = f"Critical: Fallback model ({fallback_key}) also failed: {str(e2)}"
+            logger.error(critical_msg, exc_info=True)
+            logs.append(LogEntry(message=critical_msg, type="error"))
+            
+            # Return graceful error message
+            fallback_response = AIMessage(
+                content=f"⚠️ **System Unavailable**: Both primary and backup AI models are currently unresponsive.\n\nError: `{str(e2)}`\n\nPlease try again later."
+            )
+            return {"messages": [fallback_response], "logs": logs}
 
 def route_tools(state: AgentState) -> str:
     """Roteamento baseado em tool calls."""

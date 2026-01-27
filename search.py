@@ -33,69 +33,75 @@ def search_node(state: dict) -> dict:
     search_domains = state.get("search_domains", [])
     messages = state.get("messages", [])
     
-    # Try to extract query from the last tool call
-    if messages and hasattr(messages[-1], "tool_calls") and messages[-1].tool_calls:
-        tool_call = messages[-1].tool_calls[0]
-        if "args" in tool_call and "query" in tool_call["args"]:
-            query = tool_call["args"]["query"]
-            logs.append(LogEntry(message=f"Optimized Query: {query}", type="search"))
-    
-    # API Key validation
-    if not os.getenv("TAVILY_API_KEY"):
-        error_msg = "Error: TAVILY_API_KEY not configured in .env"
-        logs.append(LogEntry(message=error_msg, type="error"))
-        # Retorna erro para o LLM também
-        return _create_tool_response(messages, error_msg, [], logs)
-    
-    if not search_domains:
-        search_domains = DEFAULT_TRUSTED_DOMAINS
-        logs.append(LogEntry(message="Using default domains", type="config"))
-    
-    clean_domains = [d.replace("site:", "") for d in search_domains]
-    logs.append(LogEntry(message=f"Searching via Tavily in {len(clean_domains)} sources...", type="search"))
-    
-    search = TavilySearchResults(
-        max_results=10,
-        include_domains=clean_domains,
-        search_depth="advanced"
-    )
-    
-    resources = []
     try:
-        results = search.invoke(query)
+        # Try to extract query from the last tool call
+        if messages and hasattr(messages[-1], "tool_calls") and messages[-1].tool_calls:
+            tool_call = messages[-1].tool_calls[0]
+            if "args" in tool_call and "query" in tool_call["args"]:
+                query = tool_call["args"]["query"]
+                logs.append(LogEntry(message=f"Optimized Query: {query}", type="search"))
         
-        # Debug parsing
-        if isinstance(results, str):
-            # If plain string returned, try to parse or wrap it
-            try:
-                # Sometimes it returns a JSON string
-                results = json.loads(results)
-            except:
-                # Or just treat as single content
-                results = [{"url": "search_result", "title": "Search Result", "content": results}]
+        # API Key validation
+        if not os.getenv("TAVILY_API_KEY"):
+            error_msg = "Error: TAVILY_API_KEY not configured in .env"
+            logs.append(LogEntry(message=error_msg, type="error"))
+            # Retorna erro para o LLM também
+            return _create_tool_response(messages, error_msg, [], logs)
         
-        for res in results:
-            if isinstance(res, str):
-                resources.append(Resource(
-                    url="unknown",
-                    title="Search Snippet",
-                    description=res[:500]
-                ))
-            elif isinstance(res, dict):
-                resources.append(Resource(
-                    url=res.get("url", "unknown"),
-                    title=res.get("title", "No Title"),
-                    description=res.get("content", "")[:500]
-                ))
+        if not search_domains:
+            search_domains = DEFAULT_TRUSTED_DOMAINS
+            logs.append(LogEntry(message="Using default domains", type="config"))
         
-        logs.append(LogEntry(message=f"Found {len(resources)} resources via Tavily", type="search"))
+        clean_domains = [d.replace("site:", "") for d in search_domains]
+        logs.append(LogEntry(message=f"Searching via Tavily in {len(clean_domains)} sources...", type="search"))
+        
+        search = TavilySearchResults(
+            max_results=10,
+            include_domains=clean_domains,
+            search_depth="advanced"
+        )
+        
+        resources = []
+        try:
+            results = search.invoke(query)
+            
+            # Debug parsing
+            if isinstance(results, str):
+                # If plain string returned, try to parse or wrap it
+                try:
+                    # Sometimes it returns a JSON string
+                    results = json.loads(results)
+                except:
+                    # Or just treat as single content
+                    results = [{"url": "search_result", "title": "Search Result", "content": results}]
+            
+            for res in results:
+                if isinstance(res, str):
+                    resources.append(Resource(
+                        url="unknown",
+                        title="Search Snippet",
+                        description=res[:500]
+                    ))
+                elif isinstance(res, dict):
+                    resources.append(Resource(
+                        url=res.get("url", "unknown"),
+                        title=res.get("title", "No Title"),
+                        description=res.get("content", "")[:500]
+                    ))
+            
+            logs.append(LogEntry(message=f"Found {len(resources)} resources via Tavily", type="search"))
+            
+        except Exception as e:
+            error_msg = f"Tavily search error: {str(e)}"
+            logs.append(LogEntry(message=error_msg, type="error"))
+            return _create_tool_response(messages, error_msg, [], logs)
+
+        return _create_tool_response(messages, f"Found {len(resources)} resources.", resources, logs)
         
     except Exception as e:
-        error_msg = f"Tavily search error: {str(e)}"
+        error_msg = f"Critical Error in Search Node: {str(e)}"
         logs.append(LogEntry(message=error_msg, type="error"))
         return _create_tool_response(messages, error_msg, [], logs)
-
-    return _create_tool_response(messages, f"Found {len(resources)} resources.", resources, logs)
 
 def _create_tool_response(messages, content, resources, logs):
     """Helper para criar ToolMessages correspondentes."""

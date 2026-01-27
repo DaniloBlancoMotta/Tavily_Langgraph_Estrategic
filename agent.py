@@ -7,14 +7,14 @@ from state import AgentState
 from chat import chat_node, route_tools
 from search import search_node, strategic_search
 from download import download_node
+# from rag_search import rag_search_node  # NEW: RAG integration (Files missing, commented out)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("StratGov_Agent")
 
-# Graph Construction
+
 builder = StateGraph(AgentState)
 
-# Add Nodes
 builder.add_node("chat", chat_node)
 builder.add_node("search", search_node)
 builder.add_node("download", download_node)

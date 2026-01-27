@@ -13,6 +13,7 @@ def get_model(model_name: str = "llama-3.3-70b-versatile", temperature: float = 
     model_map = {
         "groq": "llama-3.3-70b-versatile",
         "llama": "llama-3.3-70b-versatile",
+        "mixtral": "mixtral-8x7b-32768",
         "kimi": "moonshotai/kimi-k2-instruct-0905"
     }
     
