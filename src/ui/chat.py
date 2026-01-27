@@ -2,9 +2,9 @@ import logging
 from langchain_core.messages import SystemMessage, AIMessage
 
 logger = logging.getLogger("StratGov_Agent")
-from state import AgentState, LogEntry
-from model import get_model
-from search import strategic_search
+from src.agents.state import AgentState, LogEntry
+from src.tools.model import get_model
+from src.tools.search import strategic_search
 
 SYSTEM_PROMPT = """You are StratGov AI, a Senior Strategy & Governance Consultant.
 Your goal is to provide comprehensive, deep, and actionable strategic advice.

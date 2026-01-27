@@ -1,7 +1,7 @@
 import asyncio
 import httpx
 from bs4 import BeautifulSoup
-from state import LogEntry
+from src.agents.state import LogEntry
 
 def html_to_text(html: str) -> str:
     """Converte HTML para texto limpo (CPU-bound, rápido)."""

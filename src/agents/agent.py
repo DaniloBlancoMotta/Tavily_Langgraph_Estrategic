@@ -3,10 +3,10 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 
-from state import AgentState
-from chat import chat_node, route_tools
-from search import search_node, strategic_search
-from download import download_node
+from src.agents.state import AgentState
+from src.ui.chat import chat_node, route_tools
+from src.tools.search import search_node, strategic_search
+from src.tools.download import download_node
 # from rag_search import rag_search_node  # NEW: RAG integration (Files missing, commented out)
 
 logging.basicConfig(level=logging.INFO)

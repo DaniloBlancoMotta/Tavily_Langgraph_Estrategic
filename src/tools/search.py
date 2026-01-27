@@ -4,8 +4,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.tools import tool
 from langchain_core.messages import ToolMessage
 from pydantic import BaseModel, Field
-from state import Resource, LogEntry
-from model import get_model
+from src.agents.state import Resource, LogEntry
+from src.tools.model import get_model
 
 # Domínios confiáveis padrão
 DEFAULT_TRUSTED_DOMAINS = [

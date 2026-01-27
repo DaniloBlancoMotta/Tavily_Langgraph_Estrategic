@@ -3,7 +3,7 @@ import asyncio
 import uuid
 import json
 from langchain_core.messages import HumanMessage, AIMessage
-from agent import graph
+from src.agents.agent import graph
 
 # Page Config
 st.set_page_config(page_title="StratGov Agent Test", page_icon="🤖", layout="wide")

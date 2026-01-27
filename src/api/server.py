@@ -1,4 +1,16 @@
-import ssl_fix
+import sys
+from pathlib import Path
+# Add project root to path if needed
+if __name__ == "__main__":
+    project_root = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(project_root))
+
+# Safe import of ssl_fix (optional dependency)
+try:
+    from scripts import ssl_fix
+except ImportError:
+    pass  # ssl_fix is optional
+
 import json
 import uuid
 import uvicorn
@@ -9,7 +21,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
 
-from agent import graph
+from src.agents.agent import graph
 
 app = FastAPI(
     title="StratGov AI Server",
