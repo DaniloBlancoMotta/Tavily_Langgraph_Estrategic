@@ -11,12 +11,34 @@
 
 ## Project Structure
 
--   `agent.py`: Main LangGraph definition (Nodes & Edges).
--   `chat.py`: Chat logic and system prompting.
--   `search.py`: Tavily search integration with domain filtering.
--   `download.py`: Async content fetcher for deep reading of search results.
--   `server.py`: FastAPI server to expose the agent.
--   `frontend/`: Next.js application for the user interface.
+```
+Strategic/
+├── src/                    # Source code (production)
+│   ├── agents/            # LangGraph agents and state management
+│   │   ├── agent.py       # Main agent definition (Nodes & Edges)
+│   │   └── state.py       # State schemas
+│   ├── rag/               # Knowledge indexing and retrieval
+│   │   ├── rag_store.py   # RAG storage implementation
+│   │   └── index_knowledge.py  # Document indexing
+│   ├── tools/             # Agent tools and utilities
+│   │   ├── search.py      # Tavily search integration
+│   │   ├── download.py    # Async content fetcher
+│   │   └── model.py       # Model configurations
+│   ├── api/               # API and server
+│   │   └── server.py      # FastAPI server
+│   └── ui/                # User interfaces
+│       ├── chat.py        # Chat logic and prompting
+│       └── streamlit_app.py  # Streamlit interface
+├── tests/                  # Test files
+│   ├── unit/              # Unit tests
+│   └── integration/       # Integration tests
+├── config/                 # Configuration files
+│   └── requirements.txt   # Python dependencies
+├── docs/                   # Documentation
+├── scripts/                # Utility scripts
+├── frontend/               # Next.js application
+└── .env.example           # Environment variables template
+```
 
 ## Prerequisites
 
@@ -40,7 +62,7 @@
     source venv/bin/activate  # On Windows: venv\Scripts\activate
 
     # Install dependencies
-    pip install -r requirements.txt
+    pip install -r config/requirements.txt
     ```
 
 3.  **Environment Configuration:**
@@ -61,7 +83,7 @@
 1.  **Start the Backend Server:**
     ```bash
     # In the root directory
-    python server.py
+    python src/api/server.py
     ```
 
 2.  **Start the Frontend:**

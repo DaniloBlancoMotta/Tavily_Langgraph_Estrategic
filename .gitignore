@@ -64,3 +64,6 @@ build/
 # Project Specific
 search_results_log.txt
 search_output.txt
+*_output.txt
+*_log.txt
+*_results*.txt
