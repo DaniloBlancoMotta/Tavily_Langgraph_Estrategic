@@ -16,12 +16,12 @@ if __name__ == "__main__":
     import uvicorn
     
     print("=" * 60)
-    print("🚀 Starting StratGov AI Backend Server")
+    print(" Starting StratGov AI Backend Server")
     print("=" * 60)
     print()
-    print("📍 Server: http://localhost:8000")
-    print("📍 API Docs: http://localhost:8000/docs")
-    print("📍 Health: http://localhost:8000/health")
+    print(" Server: http://localhost:8000")
+    print(" API Docs: http://localhost:8000/docs")
+    print(" Health: http://localhost:8000/health")
     print()
     print("Press CTRL+C to stop")
     print("=" * 60)

@@ -27,3 +27,4 @@ class AgentState(TypedDict):
     report: str
     resources: List[Resource]
     logs: List[LogEntry]
+    iteration_count: int = 0
