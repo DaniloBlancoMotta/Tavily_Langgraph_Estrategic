@@ -15,6 +15,39 @@ The agent mirrors the workflow of a senior strategy analyst:
 
 The system is built on a cyclic graph architecture using **LangGraph**, enabling state persistence and iterative reasoning.
 
+### Logic Flow
+
+```mermaid
+graph TD
+    %% Styles
+    classDef brain fill:#fff,stroke:#333,stroke-width:2px;
+    classDef opt fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5;
+    classDef ext fill:#eee,stroke:#333;
+
+    Start((Start)) --> Orchestrator{Orchestrator<br/>Analyst Node}
+    
+    Orchestrator -- "Requires Data" --> Cache{Check<br/>Cache}
+    
+    Cache -- "Hit" --> Synthesis[Synthesis<br/>Engine]
+    Cache -- "Miss" --> Search[Strategic<br/>Search]
+    
+    Search --> Filter[Domain<br/>Filter]
+    Filter --> Down[Async<br/>Download]
+    
+    subgraph "Optimization Layer"
+    Down --> Distill[Document<br/>Distiller]
+    end
+    
+    Distill --> Orchestrator
+    Synthesis --> End((End))
+    
+    Orchestrator -- "Has Context" --> Synthesis
+
+    class Orchestrator,Synthesis brain;
+    class Cache,Distill opt;
+    class Search,Down ext;
+```
+
 ### Core Components
 
 *   **Orchestrator (State Management)**: Manages the conversation state, routing tools, and ensuring memory persistence across the session.
