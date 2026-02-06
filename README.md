@@ -60,7 +60,7 @@ graph TD
 ## Technical Requirements
 
 *   **Python**: 3.10+
-*   **LLM Provider**: OpenAI (GPT-4o) or Groq (Llama-3/Mixtral)
+*   **LLM Provider**: kimi2 or Groq (Llama-3/Mixtral)
 *   **Search Provider**: Tavily API
 *   **Observability**: AgentOps / LangSmith (Optional)
 
